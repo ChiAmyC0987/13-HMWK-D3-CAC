@@ -1,114 +1,115 @@
-// @TODO: YOUR CODE HERE!
-function buildMetadata(sample) {
+// USE HAIR METAL AS STARTER CODE FOR SCATTER PLOT
+// FIELD NAMES IN CSV 
+// id	state	abbr	poverty	povertyMoe	age	ageMoe	income	incomeMoe	
+// healthcare	healthcareLow	healthcareHigh	obesity	obesityLow	obesityHigh	
+//smokes	smokesLow	smokesHigh	-0.385218228
 
-  // @TODO: Complete the following function that builds the metadata panel
-  // Use `d3.json` to fetch the metadata for a sample
-  var url = "/metadata/" + sample;
-  d3.json(url).then(function(sample){
+var svgWidth = 960;
+var svgHeight = 500;
 
-    // Use d3 to select the panel with id of `#sample-metadata`
-    var sample_metadata = d3.select("#sample-metadata");
+var margin = {
+  top: 20,
+  right: 40,
+  bottom: 60,
+  left: 100
+};
 
-    // Use `.html("") to clear any existing metadata
-    sample_metadata.html("");
+var width = svgWidth - margin.left - margin.right;
+var height = svgHeight - margin.top - margin.bottom;
 
-    // Use `Object.entries` to add each key and value pair to the panel
-    // Hint: Inside the loop, you will need to use d3 to append new
-    // tags for each key-value in the metadata.
-    Object.entries(sample).forEach(([key, value]) => {
-      var row = sample_metadata.append("p");
-      row.text(`${key}: ${value}`);
+// Create an SVG wrapper, append an SVG group that will hold our chart, and shift the latter by left and top margins.
+var svg = d3.select(".chart")
+  .append("svg")
+  .attr("width", svgWidth)
+  .attr("height", svgHeight);
+
+var chartGroup = svg.append("g")
+  .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+// Import Data USE pData for poverty vs. healthcare
+d3.csv("Data.csv")
+  .then(function(pData) {
+
+    // Step 1: Parse Data/Cast as numbers
+    // ==============================
+    pData.forEach(function(data) {
+      data.poverty = +data.poverty;
+      data.healthcare = +data.healthcare;
+    });
+
+    // Step 2: Create scale functions
+    // ==============================
+    var xLinearScale = d3.scaleLinear()
+      .domain([20, d3.max(pData, d => d.poverty)])
+      .range([0, width]);
+
+    var yLinearScale = d3.scaleLinear()
+      .domain([0, d3.max(pData, d => d.healthcare)])
+      .range([height, 0]);
+
+    // Step 3: Create axis functions
+    // ==============================
+    var bottomAxis = d3.axisBottom(xLinearScale);
+    var leftAxis = d3.axisLeft(yLinearScale);
+
+    // Step 4: Append Axes to the chart
+    // ==============================
+    chartGroup.append("g")
+      .attr("transform", `translate(0, ${height})`)
+      .call(bottomAxis);
+
+    chartGroup.append("g")
+      .call(leftAxis);
+
+    // Step 5: Create Circles
+    // ==============================
+    var circlesGroup = chartGroup.selectAll("circle")
+    .data(pData)
+    .enter()
+    .append("circle")
+    .attr("cx", d => xLinearScale(d.poverty))
+    .attr("cy", d => yLinearScale(d.healthcare))
+    .attr("r", "15")
+    .attr("fill", "pink")
+    .attr("opacity", ".5");
+
+    // Step 6: Initialize tool tip
+    // ==============================
+    // rockband = state
+
+    var toolTip = d3.tip()
+      .attr("class", "tooltip")
+      .offset([80, -60])
+      .html(function(d) {
+        return (`${d.state}<br>Hair length: ${d.poverty}<br>Hits: ${d.healthcare}`);
+      });
+
+    // Step 7: Create tooltip in the chart
+    // ==============================
+    chartGroup.call(toolTip);
+
+    // Step 8: Create event listeners to display and hide the tooltip
+    // ==============================
+    circlesGroup.on("click", function(data) {
+      toolTip.show(data, this);
     })
+      // onmouseout event
+      .on("mouseout", function(data, index) {
+        toolTip.hide(data);
+      });
 
-    // Build a guage based on the sample (patient's)
-    // wash frequency (sample.WFREQ) in the metadata set
-    var data = [{domain: {x: [0, 1], y: [0, 1]}, value: sample.WFREQ , title: {text: "Weekly Cleaning"},
-    type: "indicator", mode: "gauge+number"}];
-    var layout = {width: 500, height: 500, margin: {t: 0, b: 0}};
-    Plotly.newPlot('gauge', data, layout);
-  })
-};
+    // Create axes labels
+      // y-axis text is rotated by 90 degrees (neg)
+    chartGroup.append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 0 - margin.left + 40)
+      .attr("x", 0 - (height / 2))
+      .attr("dy", "1em")
+      .attr("class", "axisText")
+      .text("Lack of Healthcare in Percent ");
 
-function buildCharts(sample) {
-
-  // @TODO: Use `d3.json` to fetch the sample data for the plots
-  var url = `/samples/${sample}`;
-  d3.json(url).then(function(data) {
-
-    // @TODO: Build a Bubble Chart using the sample data
-    var xValues = data.otu_ids;
-    var yValues = data.sample_values;
-    var tValues = data.otu_labels;
-    var mSize = data.sample_values;
-    var mClrs = data.otu_ids;
-
-    var trace_bubble = {
-      x: xValues,
-      y: yValues,
-      text: tValues,
-      mode: 'markers',
-      marker: {
-        size: mSize,
-        color: mClrs
-      }
-    };
-
-    var data = [trace_bubble];
-
-    var layout = {
-      xaxis: {title: "OTU ID"}
-    };
-
-    Plotly.newPlot('bubble', data, layout);
-
-    // @TODO: Build a Pie Chart
-    // HINT: You will need to use slice() to grab the top 10 sample_values,
-    // otu_ids, and labels (10 each).
-    d3.json(url).then(function(data) {
-      var pieValue = data.sample_values.slice(0,10);
-      var pielabel = data.otu_ids.slice(0, 10);
-      var pieHover = data.otu_labels.slice(0, 10);
-
-      var data = [{
-        values: pieValue,
-        labels: pielabel,
-        hovertext: pieHover,
-        type: 'pie'
-      }];
-      Plotly.newPlot('pie', data);
-    });
+    chartGroup.append("text")
+      .attr("transform", `translate(${width / 2}, ${height + margin.top + 30})`)
+      .attr("class", "axisText")
+      .text("Poverty level in States in Percent");
   });
-};
-
-function init() {
-
-
-  // Grab a reference to the dropdown select element
-  var selector = d3.select("#selDataset");
-
-
-  // Use the list of sample names to populate the select options
-  d3.json("/names").then((sampleNames) => {
-    sampleNames.forEach((sample) => {
-      selector
-        .append("option")
-        .text(sample)
-        .property("value", sample);
-    });
-
-
-    // Use the first sample from the list to build the initial plots
-    const firstSample = sampleNames[0];
-    buildCharts(firstSample);
-    buildMetadata(firstSample);
-  });
-};
-
-function optionChanged(newSample) {
-  // Fetch new data each time a new sample is selected
-  buildCharts(newSample);
-  buildMetadata(newSample);
-};
-
-// Initialize the dashboard
-init();
