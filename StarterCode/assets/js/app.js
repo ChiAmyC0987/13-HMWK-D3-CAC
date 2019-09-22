@@ -1,9 +1,5 @@
-// USE HAIR METAL AS STARTER CODE FOR SCATTER PLOT
-// FIELD NAMES IN CSV 
-// id	state	abbr	poverty	povertyMoe	age	ageMoe	income	incomeMoe	
-// healthcare	healthcareLow	healthcareHigh	obesity	obesityLow	obesityHigh	
-//smokes	smokesLow	smokesHigh	-0.385218228
 
+// USE HAIR METAL AS STARTER CODE FOR SCATTER PLOT
 var svgWidth = 960;
 var svgHeight = 500;
 
@@ -28,11 +24,11 @@ var chartGroup = svg.append("g")
 
 // Import Data USE Data for poverty vs. healthcare
 d3.csv("assets/data/data.csv")
-  .then(function(data) {
+  .then(function(Data) {
 
     // Step 1: Parse Data/Cast as numbers
     // ==============================
-    data.forEach(function(data) {
+    Data.forEach(function(data) {
       data.poverty = +data.poverty;
       data.healthcare = +data.healthcare;
     });
@@ -40,11 +36,11 @@ d3.csv("assets/data/data.csv")
     // Step 2: Create scale functions
     // ==============================
     var xLinearScale = d3.scaleLinear()
-      .domain([0, d3.max(data, d => d.poverty)])
+      .domain([0, d3.max(Data, d => d.poverty)])
       .range([0,(width]);
 
     var yLinearScale = d3.scaleLinear()
-      .domain([0, d3.max(data, d => d.healthcare)])
+      .domain([0, d3.max(Data, d => d.healthcare)])
       .range([height, 0]);
 
     // Step 3: Create axis functions
@@ -64,19 +60,18 @@ d3.csv("assets/data/data.csv")
     // Step 5: Create Circles
     // ==============================
     var circlesGroup = chartGroup.selectAll("circle")
-    .data(data)
+    .data(Data)
     .enter()
     .append("circle")
     .attr("cx", d => xLinearScale(d.poverty))
     .attr("cy", d => yLinearScale(d.healthcare))
     .attr("r", "15")
     .attr("fill", "blue")
-    .attr("opacity", ".3");
+    .attr("opacity", ".5");
 
     // Step 6: Initialize tool tip
     // ==============================
     // rockband = state
-
     var toolTip = d3.tip()
       .attr("class", "tooltip")
       .offset([80, -60])
@@ -103,13 +98,13 @@ d3.csv("assets/data/data.csv")
     chartGroup.append("text")
       .attr("transform", "rotate(-90)")
       .attr("y", 0 - margin.left + 40)
-      .attr("x", 0 - (height / 3))
+      .attr("x", 0 - (height / 2))
       .attr("dy", "1em")
       .attr("class", "axisText")
-      .text("Percent lacking Healthcare in State ");
+      .text("Percent lacking Healthcare in States ");
 
     chartGroup.append("text")
-      .attr("transform", `translate(${width / 3}, ${height + margin.top + 30})`)
+      .attr("transform", `translate(${width / 2}, ${height + margin.top + 30})`)
       .attr("class", "axisText")
-      .text("Percent of Poverty in State");
+      .text("Percent of Poverty in States");
   });
