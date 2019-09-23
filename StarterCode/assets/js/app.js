@@ -1,4 +1,3 @@
-
 // USE HAIR METAL AS STARTER CODE FOR SCATTER PLOT
 var svgWidth = 960;
 var svgHeight = 500;
@@ -22,13 +21,13 @@ var svg = d3.select(".chart")
 var chartGroup = svg.append("g")
   .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-// Import Data USE Data for poverty vs. healthcare
+// Import Data USE HealthData for poverty vs. healthcare
 d3.csv("assets/data/data.csv")
-  .then(function(Data) {
+  .then(function(healthData) {
 
     // Step 1: Parse Data/Cast as numbers
     // ==============================
-    Data.forEach(function(data) {
+    healthData.forEach(function(data) {
       data.poverty = +data.poverty;
       data.healthcare = +data.healthcare;
     });
@@ -36,11 +35,11 @@ d3.csv("assets/data/data.csv")
     // Step 2: Create scale functions
     // ==============================
     var xLinearScale = d3.scaleLinear()
-      .domain([0, d3.max(Data, d => d.poverty)])
-      .range([0,(width]);
+      .domain([d3.min(healthData, d => d.poverty) - 1, d3.max(healthData, d => d.poverty)])
+      .range([0, width]);
 
     var yLinearScale = d3.scaleLinear()
-      .domain([0, d3.max(Data, d => d.healthcare)])
+      .domain([0, d3.max(healthData, d => d.healthcare)])
       .range([height, 0]);
 
     // Step 3: Create axis functions
@@ -60,7 +59,7 @@ d3.csv("assets/data/data.csv")
     // Step 5: Create Circles
     // ==============================
     var circlesGroup = chartGroup.selectAll("circle")
-    .data(Data)
+    .data(healthData)
     .enter()
     .append("circle")
     .attr("cx", d => xLinearScale(d.poverty))
@@ -71,12 +70,11 @@ d3.csv("assets/data/data.csv")
 
     // Step 6: Initialize tool tip
     // ==============================
-    // rockband = state
     var toolTip = d3.tip()
       .attr("class", "tooltip")
       .offset([80, -60])
       .html(function(d) {
-        return (`${d.state}<br>Poverty: ${d.poverty}<br>Healthcare: ${d.healthcare}`);
+        return (`${d.abbr}<br>Poverty: ${d.poverty}<br>Healthcare: ${d.healthcare}`);
       });
 
     // Step 7: Create tooltip in the chart
